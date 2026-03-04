@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Long-Running Agent 工作流脚本
 基于 Anthropic《Effective harnesses for long-running agents》
@@ -9,6 +10,17 @@ Long-Running Agent 工作流脚本
 - 自动清理无用文件
 - Git 版本管理
 """
+
+# Windows UTF-8 支持
+import io
+
+if sys.platform == "win32":
+    try:
+        sys.stdout = io.TextIOWrapper(
+            sys.stdout.buffer, encoding="utf-8", line_buffering=True
+        )
+    except Exception:
+        pass
 
 import json
 import os
