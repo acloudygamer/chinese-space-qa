@@ -1,0 +1,121 @@
+{
+  "project": {
+    "name": "NLP实验2",
+    "description": "中文语言技术平台实验",
+    "session": 1,
+    "started": "2026-03-04"
+  },
+  "longRunningAgent": {
+    "mode": "initializer_coding",
+    "features_file": "features.json",
+    "log_file": "work-logs.json",
+    "workflow_script": "workflow.py",
+    "init_script": "init.sh"
+  },
+  "workflow": {
+    "max_sessions": 100,
+    "redesign_interval": 5,
+    "auto_cleanup": true,
+    "auto_commit": true,
+    "require_clean_state": true,
+    "coverage_threshold": 80
+  },
+  "git": {
+    "branch_strategy": "session_branch",
+    "main_branch": "main",
+    "commit_message_format": "feat: <session>-<feature> 完成本轮任务",
+    "require_clean_state": true
+  },
+  "tdd_config": {
+    "min_coverage": 80,
+    "test_framework": "pytest",
+    "enforce_tdd": true
+  },
+  "agents": {
+    "planning": "planner",
+    "development": "tdd-guide",
+    "review": "code-reviewer",
+    "security": "security-reviewer",
+    "verification": "verification-loop"
+  },
+  "progress": {
+    "current_feature": "sentiment-analysis",
+    "status": "in_progress",
+    "completed": [
+      {
+        "feature": "ltp-env",
+        "status": "passing",
+        "coverage": null
+      },
+      {
+        "feature": "chinese-segmentation",
+        "status": "passing",
+        "coverage": null
+      },
+      {
+        "feature": "pos-tagging",
+        "status": "passing",
+        "coverage": null
+      }
+    ],
+    "in_progress": [
+      {
+        "feature": "sentiment-analysis",
+        "status": "developing",
+        "test_file": "tests/test_sentiment.py"
+      }
+    ],
+    "pending": [
+      {
+        "feature": "ner-recognition",
+        "test_file": "tests/test_ner.py"
+      },
+      {
+        "feature": "result-analysis",
+        "test_file": null
+      },
+      {
+        "feature": "report-generation",
+        "test_file": null
+      }
+    ]
+  },
+  "features": [
+    {
+      "name": "ltp-env",
+      "description": "LTP 环境配置",
+      "status": "passing",
+      "test_file": null
+    },
+    {
+      "name": "chinese-segmentation",
+      "description": "中文分词功能",
+      "status": "passing",
+      "test_file": "tests/test_segmentation.py"
+    },
+    {
+      "name": "pos-tagging",
+      "description": "词性标注功能",
+      "status": "passing",
+      "test_file": "tests/test_pos_tagging.py"
+    },
+    {
+      "name": "sentiment-analysis",
+      "description": "情感分析实验",
+      "status": "pending",
+      "test_file": "tests/test_sentiment.py"
+    },
+    {
+      "name": "ner-recognition",
+      "description": "命名实体识别",
+      "status": "pending",
+      "test_file": "tests/test_ner.py"
+    }
+  ],
+  "verification": {
+    "last_check": null,
+    "build_status": null,
+    "test_status": null,
+    "security_status": null
+  }
+}
