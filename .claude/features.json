@@ -2,7 +2,7 @@
   "project": {
     "name": "NLP实验2",
     "description": "中文语言技术平台实验",
-    "session": 1,
+    "session": 2,
     "started": "2026-03-04"
   },
   "longRunningAgent": {
@@ -39,7 +39,7 @@
     "verification": "verification-loop"
   },
   "progress": {
-    "current_feature": "sentiment-analysis",
+    "current_feature": "ner-extractor",
     "status": "in_progress",
     "completed": [
       {
@@ -56,60 +56,66 @@
         "feature": "pos-tagging",
         "status": "passing",
         "coverage": null
+      },
+      {
+        "feature": "data-preprocessor",
+        "status": "passing",
+        "coverage": null,
+        "commit": "feat: 实现文本预处理器"
       }
     ],
     "in_progress": [
       {
-        "feature": "sentiment-analysis",
+        "feature": "ner-extractor",
         "status": "developing",
-        "test_file": "tests/test_sentiment.py"
+        "test_file": "tests/test_ner.py"
       }
     ],
     "pending": [
       {
-        "feature": "ner-recognition",
-        "test_file": "tests/test_ner.py"
+        "feature": "relation-extractor",
+        "test_file": "tests/test_relation.py"
       },
       {
-        "feature": "result-analysis",
+        "feature": "knowledge-graph",
         "test_file": null
       },
       {
-        "feature": "report-generation",
+        "feature": "qa-engine",
         "test_file": null
       }
     ]
   },
   "features": [
     {
-      "name": "ltp-env",
-      "description": "LTP 环境配置",
+      "name": "data-preprocessor",
+      "description": "文本预处理（加载/规范化/分句）",
       "status": "passing",
+      "test_file": "tests/test_preprocessor.py"
+    },
+    {
+      "name": "ner-extractor",
+      "description": "NER 命名实体识别",
+      "status": "developing",
+      "test_file": "tests/test_ner.py"
+    },
+    {
+      "name": "relation-extractor",
+      "description": "关系抽取（依存分析）",
+      "status": "pending",
+      "test_file": "tests/test_relation.py"
+    },
+    {
+      "name": "knowledge-graph",
+      "description": "知识图谱构建",
+      "status": "pending",
       "test_file": null
     },
     {
-      "name": "chinese-segmentation",
-      "description": "中文分词功能",
-      "status": "passing",
-      "test_file": "tests/test_segmentation.py"
-    },
-    {
-      "name": "pos-tagging",
-      "description": "词性标注功能",
-      "status": "passing",
-      "test_file": "tests/test_pos_tagging.py"
-    },
-    {
-      "name": "sentiment-analysis",
-      "description": "情感分析实验",
+      "name": "qa-engine",
+      "description": "问答引擎",
       "status": "pending",
-      "test_file": "tests/test_sentiment.py"
-    },
-    {
-      "name": "ner-recognition",
-      "description": "命名实体识别",
-      "status": "pending",
-      "test_file": "tests/test_ner.py"
+      "test_file": null
     }
   ],
   "verification": {
