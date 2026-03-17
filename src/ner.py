@@ -7,6 +7,7 @@ import re
 import json
 from typing import List, Dict
 from pathlib import Path
+from parser import SafeParser
 
 
 class NERExtractor:
@@ -86,21 +87,12 @@ class NERExtractor:
 
     def _parse_list_content(self, content: str) -> List:
         """解析列表内容"""
-        try:
-            # 尝试 JSON 解析
-            return json.loads(content)
-        except:
-            # 备用：正则提取
-            match = re.search(r"\[(.*)\]", content)
-            if match:
-                inner = match.group(1)
-                if "'" in inner:
-                    # 字符串列表
-                    items = re.findall(r"'([^']+)'", inner)
-                    return [items]
-                elif inner.strip():
-                    return [[inner.strip()]]
-            return []
+        # 使用安全解析器
+        parser = SafeParser()
+        result = parser.parse_list_of_lists(content)
+        if result:
+            return result
+        return []
 
     def _parse_ner_content(self, content: str) -> List[tuple]:
         """解析 NER 内容"""

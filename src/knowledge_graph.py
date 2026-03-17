@@ -12,6 +12,44 @@ from collections import defaultdict
 class KnowledgeGraph:
     """知识图谱"""
 
+    # 无意义词/停用词列表
+    STOPWORDS = {
+        "的",
+        "在",
+        "和",
+        "了",
+        "与",
+        "、",
+        "是",
+        "有",
+        "我",
+        "你",
+        "他",
+        "她",
+        "它",
+        "们",
+        "这",
+        "那",
+        "个",
+        "一",
+        "不",
+        "就",
+        "也",
+        "都",
+        "而",
+        "及",
+        "与",
+        "着",
+        "或",
+        "一个",
+        "我们",
+        "你们",
+        "他们",
+    }
+
+    # 最小实体长度（过短的实体通常是噪音）
+    MIN_ENTITY_LENGTH = 2
+
     def __init__(self):
         """初始化"""
         self.entities: Set[str] = set()
@@ -19,13 +57,44 @@ class KnowledgeGraph:
         self.relations: List[Tuple[str, str, str]] = []  # (head, relation, tail)
         self.entity_relations: Dict[str, List[Tuple[str, str]]] = defaultdict(list)
 
+    def _is_valid_entity(self, entity: str) -> bool:
+        """
+        检查实体是否有效
+
+        Args:
+            entity: 实体名称
+
+        Returns:
+            是否有效
+        """
+        if not entity:
+            return False
+        # 检查是否是停用词
+        if entity in self.STOPWORDS:
+            return False
+        # 检查长度
+        if len(entity) < self.MIN_ENTITY_LENGTH:
+            return False
+        # 检查是否全是标点
+        if all(c in "，。、；：？！" for c in entity):
+            return False
+        return True
+
     def add_entity(self, entity: str, entity_type: str):
         """添加实体"""
+        # 检查有效性
+        if not self._is_valid_entity(entity):
+            return
         self.entities.add(entity)
-        self.entity_types[entity] = entity_type
+        # 如果类型是"未知"且不是停用词，保留
+        if entity_type == "未知" or entity not in self.entity_types:
+            self.entity_types[entity] = entity_type
 
     def add_relation(self, head: str, relation: str, tail: str):
         """添加关系"""
+        # 验证实体有效性
+        if not self._is_valid_entity(head) or not self._is_valid_entity(tail):
+            return
         self.relations.append((head, relation, tail))
         self.entity_relations[head].append((relation, tail))
         # 反向关系
@@ -42,12 +111,12 @@ class KnowledgeGraph:
         Returns:
             self
         """
-        # 添加实体
+        # 添加实体（来自 NER）
         entities = ner_extractor.extract_entities()
         for entity in entities:
             self.add_entity(entity["word"], entity["type"])
 
-        # 添加关系（仅保留涉及实体的）
+        # 添加关系（仅保留涉及有效实体的）
         all_relations = rel_extractor.extract_relations()
         entity_words = self.entities
 
@@ -56,14 +125,21 @@ class KnowledgeGraph:
             tail = rel["child_word"]
             relation = rel["relation"]
 
-            # 如果头或尾是实体，添加关系
+            # 检查头尾是否有效
+            head_valid = self._is_valid_entity(head)
+            tail_valid = self._is_valid_entity(tail)
+
+            # 如果头或尾是已有实体，添加关系
             if head in entity_words or tail in entity_words:
-                # 检查是否需要添加实体
-                if head not in entity_words:
+                # 如果需要添加新实体，只添加有效的
+                if head not in entity_words and head_valid:
                     self.add_entity(head, "未知")
-                if tail not in entity_words:
+                if tail not in entity_words and tail_valid:
                     self.add_entity(tail, "未知")
-                self.add_relation(head, relation, tail)
+
+                # 添加关系（如果头尾都有效）
+                if head in self.entities and tail in self.entities:
+                    self.add_relation(head, relation, tail)
 
         return self
 

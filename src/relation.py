@@ -7,6 +7,7 @@ import json
 import re
 from typing import List, Dict, Tuple
 from pathlib import Path
+from parser import SafeParser
 
 
 class RelationExtractor:
@@ -93,45 +94,25 @@ class RelationExtractor:
 
     def _parse_list_content(self, content: str) -> List:
         """解析列表内容"""
-        # 尝试 JSON
-        try:
-            return json.loads(content)
-        except:
-            pass
-
-        # 备用：使用 eval（仅用于信任的输入）
-        try:
-            result = eval(content)
-            return result if isinstance(result, list) else []
-        except:
-            return []
+        # 使用安全解析器
+        parser = SafeParser()
+        result = parser.parse_list_of_lists(content)
+        if result:
+            return result
+        return []
 
     def _parse_dep_content(self, content: str) -> Dict:
         """解析依存分析内容"""
         # 格式: {'head': [5, 5, 4, 2, 0], 'label': ['SBV', 'ADV', 'ATT', 'POB', 'HED']}
         dep = {"head": [], "label": []}
 
-        # 尝试 JSON
-        try:
-            data = json.loads(content)
+        # 使用安全解析器
+        parser = SafeParser()
+        data = parser.parse_dict(content)
+
+        if data:
             dep["head"] = data.get("head", [])
             dep["label"] = data.get("label", [])
-            return dep
-        except:
-            pass
-
-        # 备用：使用 eval
-        try:
-            data = eval(content)
-            # eval 可能返回列表或字典
-            if isinstance(data, list) and len(data) > 0:
-                data = data[0]
-            if isinstance(data, dict):
-                dep["head"] = data.get("head", [])
-                dep["label"] = data.get("label", [])
-            return dep
-        except:
-            pass
 
         return dep
 
@@ -159,9 +140,14 @@ class RelationExtractor:
                 if not include_core and label == "HED":
                     continue
 
-                # 头节点索引（0 表示根节点）
-                if head > 0 and head <= len(words):
-                    head_word = words[head - 1]
+                # 头节点索引（0 表示根节点，1-based in LTP）
+                # head=0 表示依赖根节点，head>=1 表示依赖其他词
+                if head >= 0 and head <= len(words):
+                    if head == 0:
+                        # 依赖根节点，关系方向为: 根节点 -> 当前词
+                        head_word = "ROOT"
+                    else:
+                        head_word = words[head - 1]
                     child_word = words[idx]
                 else:
                     continue
