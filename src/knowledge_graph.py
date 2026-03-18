@@ -7,6 +7,8 @@ import json
 from typing import List, Dict, Set, Tuple
 from pathlib import Path
 from collections import defaultdict
+from ner import NERExtractor
+from relation import RelationExtractor
 
 
 class KnowledgeGraph:
@@ -223,9 +225,6 @@ def build_knowledge_graph(
     Returns:
         KnowledgeGraph 实例
     """
-    from ner import NERExtractor
-    from relation import RelationExtractor
-
     ner = NERExtractor(ner_result_file)
     rel = RelationExtractor(rel_result_file)
 

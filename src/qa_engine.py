@@ -7,6 +7,7 @@ import json
 import re
 from typing import List, Dict, Optional, Tuple
 from pathlib import Path
+from knowledge_graph import build_knowledge_graph
 
 
 class QAEngine:
@@ -40,8 +41,6 @@ class QAEngine:
                 self.kg_data = json.load(f)
         else:
             # 从源文件构建
-            from knowledge_graph import build_knowledge_graph
-
             kg = build_knowledge_graph("ltp_results.txt", "ltp_results.txt")
             self.kg_data = kg.to_dict()
 

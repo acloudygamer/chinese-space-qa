@@ -13,7 +13,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from ner import NERExtractor, extract_entities
 
-
 class TestNERExtractor:
     """NER 实体识别测试"""
 

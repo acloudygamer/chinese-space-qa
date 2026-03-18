@@ -1,0 +1,7 @@
+digraph KnowledgeGraph {
+  rankdir=LR;
+  "卫星发射" [label="卫星发射", type="机构名"];
+  "澳门特别行政区" [label="澳门特别行政区", type="机构名"];
+  "澳门" [label="澳门", type="地名"];
+  "国家航天局" [label="国家航天局", type="机构名"];
+}

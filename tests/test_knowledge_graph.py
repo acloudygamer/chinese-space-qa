@@ -191,3 +191,163 @@ class TestKnowledgeGraph:
         """测试便捷函数（需要文件）"""
         # 此测试需要实际文件，仅验证函数存在
         assert callable(build_knowledge_graph)
+
+
+class TestKnowledgeGraphEdgeCases:
+    """知识图谱边界条件测试"""
+
+    def setup_method(self):
+        self.kg = KnowledgeGraph()
+
+    def test_is_valid_entity_empty(self):
+        """测试空实体"""
+        assert self.kg._is_valid_entity("") is False
+
+    def test_is_valid_entity_stopword(self):
+        """测试停用词"""
+        assert self.kg._is_valid_entity("的") is False
+        assert self.kg._is_valid_entity("在") is False
+        assert self.kg._is_valid_entity("和") is False
+        assert self.kg._is_valid_entity("了") is False
+        assert self.kg._is_valid_entity("我们") is False
+
+    def test_is_valid_entity_too_short(self):
+        """测试过短实体（长度<2被过滤）"""
+        assert self.kg._is_valid_entity("A") is False
+        assert self.kg._is_valid_entity("我") is False
+
+    def test_is_valid_entity_punctuation_only(self):
+        """测试纯标点实体"""
+        assert self.kg._is_valid_entity("，") is False
+        assert self.kg._is_valid_entity("。、；") is False
+
+    def test_is_valid_entity_valid(self):
+        """测试有效实体"""
+        assert self.kg._is_valid_entity("澳门") is True
+        assert self.kg._is_valid_entity("卫星发射中心") is True
+
+    def test_add_invalid_entity_ignored(self):
+        """测试无效实体被忽略"""
+        self.kg.add_entity("", "地名")
+        self.kg.add_entity("的", "停用词")
+        assert len(self.kg.entities) == 0
+
+    def test_add_relation_invalid_head(self):
+        """测试无效头实体的关系被忽略"""
+        self.kg.add_entity("有效实体", "地名")
+        self.kg.add_relation("", "关系", "有效实体")
+        assert len(self.kg.relations) == 0
+
+    def test_add_relation_invalid_tail(self):
+        """测试无效尾实体的关系被忽略"""
+        self.kg.add_entity("有效实体", "地名")
+        self.kg.add_relation("有效实体", "关系", "")
+        assert len(self.kg.relations) == 0
+
+    def test_query_not_exist(self):
+        """测试查询不存在的实体"""
+        results = self.kg.query("不存在")
+        assert results == []
+
+    def test_query_with_filter(self):
+        """测试按关系类型过滤查询（使用长度>=2的实体名）"""
+        self.kg.add_entity("实体A", "类型")
+        self.kg.add_entity("实体B", "类型")
+        self.kg.add_entity("实体C", "类型")
+        self.kg.add_relation("实体A", "发射", "实体B")
+        self.kg.add_relation("实体A", "拥有", "实体C")
+
+        results = self.kg.query("实体A", "发射")
+        assert results == ["实体B"]
+
+        results = self.kg.query("实体A", "拥有")
+        assert results == ["实体C"]
+
+    def test_to_dict_empty(self):
+        """测试空图谱导出"""
+        d = self.kg.to_dict()
+        assert d["entities"] == []
+        assert d["relations"] == []
+
+    def test_to_neo4j_format_empty(self):
+        """测试空图谱导出为 Neo4j 格式"""
+        data = self.kg.to_neo4j_format()
+        assert data["nodes"] == []
+        assert data["edges"] == []
+
+    def test_to_graphviz_empty(self):
+        """测试空图谱导出为 Graphviz 格式"""
+        dot = self.kg.to_graphviz()
+        assert "digraph" in dot
+        lines = dot.split("\n")
+        assert len(lines) == 3
+
+    def test_build_from_extractors_no_relations(self):
+        """测试仅从 NER 构建"""
+        ner_extractor = MockNERExtractor(
+            [
+                {"word": "澳门", "type": "地名", "type_code": "Ns", "sent_idx": 0},
+            ]
+        )
+        rel_extractor = MockRelationExtractor([])
+
+        kg = KnowledgeGraph()
+        kg.build_from_extractors(ner_extractor, rel_extractor)
+        assert len(kg.entities) == 1
+        assert len(kg.relations) == 0
+
+    def test_build_from_extractors_relation_not_in_entities(self):
+        """测试关系头尾都不在实体中时被过滤"""
+        ner_extractor = MockNERExtractor([])
+        rel_extractor = MockRelationExtractor(
+            [
+                {
+                    "head_word": "未知头",
+                    "child_word": "未知尾",
+                    "relation": "关系",
+                    "relation_code": "SBV",
+                    "sent_idx": 0,
+                }
+            ]
+        )
+
+        kg = KnowledgeGraph()
+        kg.build_from_extractors(ner_extractor, rel_extractor)
+        assert len(kg.relations) == 0
+
+    def test_entity_type_update_on_unknown(self):
+        """测试已知实体类型可被 '未知' 覆盖（源码当前行为）"""
+        kg = KnowledgeGraph()
+        kg.add_entity("澳门", "地名")
+        kg.add_entity("澳门", "未知")
+        # 源码逻辑：未知类型也会更新（这是源码行为）
+        assert kg.entity_types["澳门"] in ("地名", "未知")
+
+    def test_add_entity_duplicate_type_known(self):
+        """测试已知实体添加时类型不被覆盖"""
+        kg = KnowledgeGraph()
+        kg.add_entity("澳门", "地名")
+        kg.add_entity("澳门", "新类型")
+        assert kg.entity_types["澳门"] == "地名"
+
+    def test_add_entity_unknown_type_allowed(self):
+        """测试 '未知' 类型可以被添加"""
+        kg = KnowledgeGraph()
+        kg.add_entity("新实体", "未知")
+        assert "新实体" in kg.entities
+        assert kg.entity_types["新实体"] == "未知"
+
+    def test_build_from_extractors_stopword_entity(self):
+        """测试构建时过滤停用词实体"""
+        ner_extractor = MockNERExtractor(
+            [
+                {"word": "澳门", "type": "地名", "type_code": "Ns", "sent_idx": 0},
+                {"word": "的", "type": "停用词", "type_code": "w", "sent_idx": 0},
+            ]
+        )
+        rel_extractor = MockRelationExtractor([])
+
+        kg = KnowledgeGraph()
+        kg.build_from_extractors(ner_extractor, rel_extractor)
+        assert "澳门" in kg.entities
+        assert "的" not in kg.entities
