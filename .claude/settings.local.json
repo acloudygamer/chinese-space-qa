@@ -4,7 +4,10 @@
       "mcp__filesystem__list_directory",
       "mcp__filesystem__read_file",
       "WebSearch",
-      "WebFetch(domain:docs.anthropic.com)"
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(echo:*)",
+      "Bash(source:*)",
+      "Bash(claude:*)"
     ],
     "dangerouslyDisableSandbox": true
   },
